@@ -43,6 +43,7 @@ void publish_tf_transform(tf::Transform, ros::Time);
 void publish_pose_stamped(tf::Transform, ros::Time);
 void publish_ros_tracking_img(cv::Mat, ros::Time);
 void publish_ros_tracking_mappoints(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);
+void publish_ros_mappoints(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);
 
 
 tf::Transform from_orb_to_ros_tf_transform(cv::Mat);

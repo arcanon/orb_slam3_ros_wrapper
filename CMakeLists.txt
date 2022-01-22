@@ -3,7 +3,7 @@ project(orb_slam3_ros_wrapper)
 
 # Change this to your installation of ORB-SLAM3. Default is ~/
 set(ORB_SLAM3_DIR
-   $ENV{HOME}/ORB_SLAM3
+   /code/solution/ORB_SLAM3
 )
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -29,7 +29,7 @@ find_package(Eigen3)
 MESSAGE("Eigen 3 VERSION:")
 MESSAGE(${Eigen3_VERSION})
 
-find_package(Pangolin REQUIRED)
+# find_package(Pangolin REQUIRED)
 
 catkin_package (
    CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs message_runtime
@@ -43,7 +43,7 @@ include_directories(
    ${PROJECT_SOURCE_DIR}/include
    ${EIGEN3_INCLUDE_DIR}
    ${catkin_INCLUDE_DIRS}
-   ${Pangolin_INCLUDE_DIRS}
+#   ${Pangolin_INCLUDE_DIRS}
 )
 
 # Build ROS nodes
@@ -51,7 +51,7 @@ set(LIBS
    ${ORB_SLAM3_DIR}/lib/libORB_SLAM3.so
    ${EIGEN3_LIBS}
    ${catkin_LIBRARIES}
-   ${Pangolin_LIBRARIES}
+#   ${Pangolin_LIBRARIES}
    ${OpenCV_LIBS}
 )
 

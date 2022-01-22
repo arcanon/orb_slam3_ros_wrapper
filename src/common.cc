@@ -8,6 +8,7 @@
 
 ros::Publisher pose_pub;
 ros::Publisher map_points_pub;
+ros::Publisher map_points_all_pub;
 image_transport::Publisher rendered_image_pub;
 
 std::string map_frame_id, pose_frame_id;
@@ -23,6 +24,8 @@ void setup_ros_publishers(ros::NodeHandle &node_handler, image_transport::ImageT
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped> ("/orb_slam3_ros/camera", 1);
 
     map_points_pub = node_handler.advertise<sensor_msgs::PointCloud2>("orb_slam3_ros/map_points", 1);
+
+    map_points_all_pub = node_handler.advertise<sensor_msgs::PointCloud2>("orb_slam3_ros/map_points_all", 1);
 
     rendered_image_pub = image_transport.advertise("orb_slam3_ros/tracking_image", 1);
 }
@@ -65,6 +68,8 @@ void publish_ros_tracking_img(cv::Mat image, ros::Time current_frame_time)
 
     header.frame_id = map_frame_id;
 
+    cout << "publish_ros_tracking_img" << endl;
+
     const sensor_msgs::ImagePtr rendered_image_msg = cv_bridge::CvImage(header, "bgr8", image).toImageMsg();
 
     rendered_image_pub.publish(rendered_image_msg);
@@ -75,6 +80,14 @@ void publish_ros_tracking_mappoints(std::vector<ORB_SLAM3::MapPoint*> map_points
     sensor_msgs::PointCloud2 cloud = tracked_mappoints_to_pointcloud(map_points, current_frame_time);
     
     map_points_pub.publish(cloud);
+}
+
+void publish_ros_mappoints(std::vector<ORB_SLAM3::MapPoint*> map_points, ros::Time current_frame_time)
+{
+    cout << "publishing map points " << map_points.size() << endl;
+    sensor_msgs::PointCloud2 cloud = tracked_mappoints_to_pointcloud(map_points, current_frame_time);
+    
+    map_points_all_pub.publish(cloud);
 }
 
 void setup_tf_orb_to_ros(ORB_SLAM3::System::eSensor sensor_type)
@@ -120,7 +133,7 @@ tf::Transform from_orb_to_ros_tf_transform(cv::Mat transformation_mat)
     tf::Vector3 tf_camera_translation(orb_translation.at<float> (0), orb_translation.at<float> (1), orb_translation.at<float> (2));
 
     // cout << setprecision(9) << "Rotation: " << endl << orb_rotation << endl;
-    // cout << setprecision(9) << "Translation xyz: " << orb_translation.at<float> (0) << " " << orb_translation.at<float> (1) << " " << orb_translation.at<float> (2) << endl;
+     cout << setprecision(9) << "Translation xyz: " << orb_translation.at<float> (0) << " " << orb_translation.at<float> (1) << " " << orb_translation.at<float> (2) << endl;
 
     // Transform from orb coordinate system to ros coordinate system on camera coordinates
     tf_camera_rotation    = tf_orb_to_ros * tf_camera_rotation;

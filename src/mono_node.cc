@@ -27,6 +27,8 @@ int main(int argc, char **argv)
         ROS_WARN ("Arguments supplied via command line are neglected.");
     }
 
+    ROS_INFO("ash: mono starting1");
+
     ros::NodeHandle node_handler;
     std::string node_name = ros::this_node::getName();
     image_transport::ImageTransport image_transport(node_handler);
@@ -42,11 +44,13 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    ROS_INFO("ash: mono starting");
+
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/pose_frame_id", pose_frame_id, "pose");
 
     bool enable_pangolin;
-    node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
+    node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, false);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(voc_file, settings_file, ORB_SLAM3::System::MONOCULAR, enable_pangolin);
@@ -57,6 +61,8 @@ int main(int argc, char **argv)
     setup_ros_publishers(node_handler, image_transport);
 
     setup_tf_orb_to_ros(ORB_SLAM3::System::MONOCULAR);
+
+    ROS_INFO("ash: starting spin");
 
     ros::spin();
 
@@ -70,6 +76,7 @@ int main(int argc, char **argv)
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 {
+    ROS_INFO("ash: grabbin image");
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -91,5 +98,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
 
     publish_ros_tracking_mappoints(mpSLAM->GetTrackedMapPoints(), current_frame_time);
 
-    // publish_ros_tracking_img(mpSLAM->GetCurrentFrame(), current_frame_time);
+    publish_ros_mappoints(mpSLAM->GetAtlasMapPoints(), current_frame_time);
+
+    publish_ros_tracking_img(mpSLAM->GetCurrentFrame(), current_frame_time);
 }

@@ -62,6 +62,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    ROS_INFO("ash: mono-imu starting");
+
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/pose_frame_id", pose_frame_id, "pose");
 
@@ -83,6 +85,8 @@ int main(int argc, char **argv)
 
     setup_tf_orb_to_ros(ORB_SLAM3::System::IMU_MONOCULAR);
 
+    ROS_INFO("ash: mono-imu spin");
+
     ros::spin();
 
     // Stop all threads
@@ -98,6 +102,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &img_msg)
     mBufMutex.lock();
     if (!img0Buf.empty())
         img0Buf.pop();
+    ROS_INFO("ash: GrabImage t=%f", img_msg->header.stamp.toSec());
     img0Buf.push(img_msg);
     mBufMutex.unlock();
 }
@@ -128,6 +133,7 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
 
 void ImageGrabber::SyncWithImu()
 {
+    ROS_INFO("ash: SyncWithImu");
     while(1)
     {
         if (!img0Buf.empty()&&!mpImuGb->imuBuf.empty())
@@ -138,8 +144,9 @@ void ImageGrabber::SyncWithImu()
 
             tIm = img0Buf.front()->header.stamp.toSec();
             if(tIm>mpImuGb->imuBuf.back()->header.stamp.toSec())
+                //ROS_INFO("ash: early out imu data");
                 continue;
-            
+                
             {
             this->mBufMutex.lock();
             im = GetImage(img0Buf.front());
@@ -154,12 +161,18 @@ void ImageGrabber::SyncWithImu()
             {
                 // Load imu measurements from buffer
                 vImuMeas.clear();
+                cout << "ash: tm" << tIm << "imu tstamp " << mpImuGb->imuBuf.front()->header.stamp.toSec() << endl;
                 while(!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tIm)
                 {
+                    
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
-                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
+                    //ROS_INFO("ash: imu time %f accx %f gyrx %f", t, acc.x, gyr.x);
+                    auto pt = ORB_SLAM3::IMU::Point(acc, gyr, t);
+                    vImuMeas.push_back(pt);
+
+                    cout << "imu " << " " << pt.t << " " << pt.a << " " << pt.w << endl;
                     mpImuGb->imuBuf.pop();
                 }
             }
@@ -168,13 +181,18 @@ void ImageGrabber::SyncWithImu()
                 mClahe->apply(im,im);
 
             // Main algorithm runs here
+            ROS_INFO("ash: TrackMonocular t=%f ", tIm);
             cv::Mat Tcw = mpSLAM->TrackMonocular(im, tIm, vImuMeas);
+
+            cout << "ash: tcw = " << Tcw << endl << endl;
 
             publish_ros_pose_tf(Tcw, current_frame_time, ORB_SLAM3::System::IMU_MONOCULAR);
 
             publish_ros_tracking_mappoints(mpSLAM->GetTrackedMapPoints(), current_frame_time);
 
-            // publish_ros_tracking_img(mpSLAM->GetCurrentFrame(), current_frame_time);
+            publish_ros_mappoints(mpSLAM->GetAtlasMapPoints(), current_frame_time);
+
+            publish_ros_tracking_img(mpSLAM->GetCurrentFrame(), current_frame_time);
         }
 
         std::chrono::milliseconds tSleep(1);
@@ -185,6 +203,7 @@ void ImageGrabber::SyncWithImu()
 void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
 {
     mBufMutex.lock();
+    ROS_INFO("ash: GrabImu t=%f", imu_msg->header.stamp.toSec());
     imuBuf.push(imu_msg);
     mBufMutex.unlock();
     return;
