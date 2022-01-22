@@ -1,0 +1,1 @@
+cd /code/solution/build/orb_slam3_ros_wrapper; catkin build --get-env orb_slam3_ros_wrapper | catkin env -si  /usr/bin/make cmake_check_build_system; cd -
