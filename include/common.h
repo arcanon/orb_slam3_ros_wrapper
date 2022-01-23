@@ -38,7 +38,7 @@ void setup_ros_publishers(ros::NodeHandle &node_handler, image_transport::ImageT
 void setup_tf_orb_to_ros(ORB_SLAM3::System::eSensor);
 
 
-void publish_ros_pose_tf(cv::Mat, ros::Time, ORB_SLAM3::System::eSensor);
+void publish_ros_pose_tf(Sophus::SE3f, ros::Time, ORB_SLAM3::System::eSensor);
 void publish_tf_transform(tf::Transform, ros::Time);
 void publish_pose_stamped(tf::Transform, ros::Time);
 void publish_ros_tracking_img(cv::Mat, ros::Time);
@@ -46,5 +46,5 @@ void publish_ros_tracking_mappoints(std::vector<ORB_SLAM3::MapPoint*>, ros::Time
 void publish_ros_mappoints(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);
 
 
-tf::Transform from_orb_to_ros_tf_transform(cv::Mat);
+tf::Transform from_orb_to_ros_tf_transform(Sophus::SE3f);
 sensor_msgs::PointCloud2 tracked_mappoints_to_pointcloud(std::vector<ORB_SLAM3::MapPoint*>, ros::Time);

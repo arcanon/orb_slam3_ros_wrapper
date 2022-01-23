@@ -30,9 +30,9 @@ void setup_ros_publishers(ros::NodeHandle &node_handler, image_transport::ImageT
     rendered_image_pub = image_transport.advertise("orb_slam3_ros/tracking_image", 1);
 }
 
-void publish_ros_pose_tf(cv::Mat Tcw, ros::Time current_frame_time, ORB_SLAM3::System::eSensor sensor_type)
+void publish_ros_pose_tf(Sophus::SE3f Tcw, ros::Time current_frame_time, ORB_SLAM3::System::eSensor sensor_type)
 {
-    if (!Tcw.empty())
+    //if (!Tcw.empty())
     {
         tf::Transform tf_transform = from_orb_to_ros_tf_transform (Tcw);
 
@@ -116,24 +116,27 @@ void setup_tf_orb_to_ros(ORB_SLAM3::System::eSensor sensor_type)
     
 }
 
-tf::Transform from_orb_to_ros_tf_transform(cv::Mat transformation_mat)
+tf::Transform from_orb_to_ros_tf_transform(Sophus::SE3f transformation_mat)
 {
-    cv::Mat orb_rotation(3, 3, CV_32F);
-    cv::Mat orb_translation(3, 1, CV_32F);
+    //cv::Mat orb_rotation(3, 3, CV_32F);
+    //cv::Mat orb_translation(3, 1, CV_32F);
 
-    orb_rotation    = transformation_mat.rowRange(0, 3).colRange(0, 3);
-    orb_translation = transformation_mat.rowRange(0, 3).col(3);
+    //orb_rotation    = transformation_mat.rowRange(0, 3).colRange(0, 3);
+    //orb_translation = transformation_mat.rowRange(0, 3).col(3);
+
+    Sophus::Matrix3<float> orb_rotation =  transformation_mat.rotationMatrix();
+    Sophus::SE3f::TranslationMember orb_translation = transformation_mat.translation();
 
     tf::Matrix3x3 tf_camera_rotation(
-        orb_rotation.at<float> (0, 0), orb_rotation.at<float> (0, 1), orb_rotation.at<float> (0, 2),
-        orb_rotation.at<float> (1, 0), orb_rotation.at<float> (1, 1), orb_rotation.at<float> (1, 2),
-        orb_rotation.at<float> (2, 0), orb_rotation.at<float> (2, 1), orb_rotation.at<float> (2, 2)
+        orb_rotation(0, 0), orb_rotation(0, 1), orb_rotation(0, 2),
+        orb_rotation(1, 0), orb_rotation(1, 1), orb_rotation(1, 2),
+        orb_rotation(2, 0), orb_rotation(2, 1), orb_rotation(2, 2)
     );
 
-    tf::Vector3 tf_camera_translation(orb_translation.at<float> (0), orb_translation.at<float> (1), orb_translation.at<float> (2));
+    tf::Vector3 tf_camera_translation(orb_translation(0), orb_translation(1), orb_translation(2));
 
     // cout << setprecision(9) << "Rotation: " << endl << orb_rotation << endl;
-     cout << setprecision(9) << "Translation xyz: " << orb_translation.at<float> (0) << " " << orb_translation.at<float> (1) << " " << orb_translation.at<float> (2) << endl;
+     cout << setprecision(9) << "Translation xyz: " << orb_translation(0) << " " << orb_translation(1) << " " << orb_translation(2) << endl;
 
     // Transform from orb coordinate system to ros coordinate system on camera coordinates
     tf_camera_rotation    = tf_orb_to_ros * tf_camera_rotation;
@@ -191,7 +194,7 @@ sensor_msgs::PointCloud2 tracked_mappoints_to_pointcloud(std::vector<ORB_SLAM3::
         if (map_points[i])
         {
 
-            tf::Vector3 point_translation(map_points[i]->GetWorldPos().at<float> (0), map_points[i]->GetWorldPos().at<float> (1), map_points[i]->GetWorldPos().at<float> (2));
+            tf::Vector3 point_translation(map_points[i]->GetWorldPos()(0), map_points[i]->GetWorldPos()(1), map_points[i]->GetWorldPos()(2));
 
             point_translation = tf_orb_to_ros * point_translation;
 

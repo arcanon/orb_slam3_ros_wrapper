@@ -182,9 +182,9 @@ void ImageGrabber::SyncWithImu()
 
             // Main algorithm runs here
             ROS_INFO("ash: TrackMonocular t=%f ", tIm);
-            cv::Mat Tcw = mpSLAM->TrackMonocular(im, tIm, vImuMeas);
+            Sophus::SE3f Tcw = mpSLAM->TrackMonocular(im, tIm, vImuMeas);
 
-            cout << "ash: tcw = " << Tcw << endl << endl;
+            //cout << "ash: tcw = " << Tcw << endl << endl;
 
             publish_ros_pose_tf(Tcw, current_frame_time, ORB_SLAM3::System::IMU_MONOCULAR);
 

@@ -141,7 +141,7 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const se
         return;
     }
 
-    cv::Mat Tcw;
+    Sophus::SE3f Tcw;
     if(do_rectify)
     {
         cv::Mat imLeft, imRight;
